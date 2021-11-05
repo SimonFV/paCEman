@@ -1,5 +1,6 @@
 #include "server.h"
 
+// Funcion que corre en un hilo aparte para ejecutar el servidor
 static DWORD WINAPI serverThread(void *threadParams)
 {
     start_server();
@@ -8,22 +9,26 @@ static DWORD WINAPI serverThread(void *threadParams)
 
 int main()
 {
-    message[0] = '\0'; // Mensaje que se envia a todos los clientes
+    message[0] = '\0'; // Inicializa el mensaje que se envia a todos los clientes
+    char input[BUFLEN];
     DWORD threadDescriptor;
     CreateThread(NULL, 0, serverThread, NULL, 0, &threadDescriptor); // Hilo para el servidor
 
     while (running)
     {
-        printf("Enviar: ");
-        scanf_s("%s", message, BUFLEN);
-        if (strcmp("close", message) == 0)
+        scanf_s("%s", input, BUFLEN);
+        if (strcmp("close", input) == 0)
         {
             running = 0;
+        }
+        else
+        {
+            strcpy_s(message, BUFLEN, input);
         }
         fflush(stdout);
     }
     printf("Cerrando el servidor...\n");
-    Sleep(3000);
+    Sleep(1000);
 
     return 0;
 }

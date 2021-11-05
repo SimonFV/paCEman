@@ -87,11 +87,11 @@ int start_server()
     char recvbuf[BUFLEN]; // buffer para los mensajes recibidos
 
     // Algunos mensajes comunes enviados al cliente
-    char *welcome = "Bienvenido al servidor!\n";
+    char *welcome = "Bienvenido al servidor!;";
     int welcomeLength = strlen(welcome);
-    char *full = "Servidor lleno.\n";
+    char *full = "Servidor lleno.;";
     int fullLength = strlen(full);
-    char *goodbye = "Adios.\n";
+    char *goodbye = "Adios.;";
     int goodbyeLength = strlen(goodbye);
 
     // Limpia el array de clientes
@@ -124,7 +124,7 @@ int start_server()
         }
 
         // Espera por actividad en alguno de los sockets
-        struct timeval tv = {2, 0}; // Tiempo maximo que espera por actividad en segundos
+        struct timeval tv = {0, 200000}; // Tiempo maximo que espera por actividad en segundos
         int activity = select(max_sd + 1, &socketSet, NULL, NULL, &tv);
         if (activity < 0)
         {
@@ -154,6 +154,7 @@ int start_server()
             }
             message[0] = '\0';
         }
+
         // Determina si el listener presenta actividad
         if (FD_ISSET(listener, &socketSet))
         {
@@ -240,6 +241,7 @@ int start_server()
                     }
 
                     // Reenvia el mismo mensaje devuelta al cliente
+                    /*
                     sendRes = send(sd, recvbuf, res, 0);
                     if (sendRes == SOCKET_ERROR)
                     {
@@ -248,7 +250,7 @@ int start_server()
                         closesocket(sd);
                         clients[i] = 0;
                         curNoClients--;
-                    }
+                    } */
                 }
                 else
                 {

@@ -3,9 +3,36 @@
 char running = !0; // estado del servidir, mantiene vivo el loop principal
 char message[BUFLEN];
 
+HANDLE msg_in_mutex, msg_out_mutex; // Mutex par accesar a los mensajes desde diferentes hilos
+
+// Estructura que almacena los mensajes y quien los envia o recibe
+typedef struct message
+{
+    char text[BUFLEN];
+    int current_client;
+} message_t;
+
+message_t msg_in, msg_out; // Mensajes de entrada y salida, respectivamente
+
+// Funciones que actualizan los mensajes enviados y recibidos utilizando mutex
+// Parametros: Mensaje, Index del cliente (-1 para enviar a todos)
+void update_msg_in(char *new_msg, int client)
+{
+    WaitForSingleObject(msg_in_mutex, INFINITE);
+    strcpy_s(msg_in.text, BUFLEN, new_msg);
+    msg_in.current_client = client;
+    ReleaseMutex(msg_in_mutex);
+}
+void update_msg_out(char *new_msg, int client)
+{
+    WaitForSingleObject(msg_out_mutex, INFINITE);
+    strcpy_s(msg_out.text, BUFLEN, new_msg);
+    msg_out.current_client = client;
+    ReleaseMutex(msg_out_mutex);
+}
+
 // Funcion que crea y ejecuta el servidor.
 // Retorna 0 si no ocurren errores durante el proceso, 1 en caso contrario.
-
 int start_server()
 {
     printf("Iniciando servidor...\n");
@@ -131,29 +158,50 @@ int start_server()
             continue;
         }
 
-        // Envia el mensaje a todos los clientes
-        if (strlen(message) > 0)
+        // Envia el mensaje a los clientes
+        WaitForSingleObject(msg_out_mutex, INFINITE);
+        if (strlen(msg_out.text) > 0)
         {
-            for (int i = 0; i < MAX_CLIENTS; i++)
+            if (msg_out.current_client == -1) // Envia el mensaje a todos
             {
-                if (!clients[i])
+                for (int i = 0; i < MAX_CLIENTS; i++)
                 {
-                    continue;
-                }
+                    if (!clients[i])
+                    {
+                        continue;
+                    }
 
-                sd = clients[i];
-                sendRes = send(sd, message, strlen(message), 0);
-                if (sendRes == SOCKET_ERROR)
-                {
-                    printf("Error al enviar mensaje devuelta: %d\n", WSAGetLastError());
-                    shutdown(sd, SD_BOTH);
-                    closesocket(sd);
-                    clients[i] = 0;
-                    curNoClients--;
+                    sd = clients[i];
+                    sendRes = send(sd, msg_out.text, strlen(msg_out.text), 0);
+                    if (sendRes == SOCKET_ERROR)
+                    {
+                        printf("Error al enviar mensaje devuelta: %d\n", WSAGetLastError());
+                        shutdown(sd, SD_BOTH);
+                        closesocket(sd);
+                        clients[i] = 0;
+                        curNoClients--;
+                    }
                 }
             }
-            message[0] = '\0';
+            else //Envia el mensaje a un cliente especifico
+            {
+                if (clients[msg_out.current_client])
+                {
+                    sd = clients[msg_out.current_client];
+                    sendRes = send(sd, msg_out.text, strlen(msg_out.text), 0);
+                    if (sendRes == SOCKET_ERROR)
+                    {
+                        printf("Error al enviar mensaje devuelta: %d\n", WSAGetLastError());
+                        shutdown(sd, SD_BOTH);
+                        closesocket(sd);
+                        clients[msg_out.current_client] = 0;
+                        curNoClients--;
+                    }
+                }
+            }
+            msg_out.text[0] = '\0';
         }
+        ReleaseMutex(msg_out_mutex);
 
         // Determina si el listener presenta actividad
         if (FD_ISSET(listener, &socketSet))

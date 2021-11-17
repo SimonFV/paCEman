@@ -29,23 +29,29 @@ public class Board extends JPanel implements ActionListener {
     private int[] dx, dy;
     private int[] ghost_x, ghost_y, ghost_dx, ghost_dy, ghostSpeed;
 
-    private Image heart, ghost;
+    private Image ghost;
     private Image up, down, left, right;
+    private Image apple;
 
     private int pacman_x, pacman_y, pacmand_x, pacmand_y;
     private int req_dx, req_dy;
 
-    private final short levelData[] = {19, 26, 26, 26, 26, 26, 18, 18, 18, 26, 26, 26, 26, 26, 22,
-            21, 0, 0, 0, 0, 0, 17, 16, 20, 0, 0, 0, 0, 0, 21, 21, 0, 19, 18, 18, 18, 16, 16, 16, 26,
-            26, 26, 26, 26, 20, 21, 0, 17, 16, 16, 16, 16, 16, 20, 0, 0, 0, 0, 0, 21, 21, 0, 17, 16,
-            16, 16, 16, 16, 16, 18, 18, 18, 18, 18, 20, 21, 0, 17, 16, 16, 16, 24, 24, 24, 16, 16,
-            16, 16, 16, 20, 17, 18, 16, 16, 16, 20, 0, 0, 0, 17, 16, 16, 16, 16, 20, 17, 16, 16, 16,
-            16, 20, 0, 0, 0, 17, 16, 16, 16, 16, 20, 17, 16, 16, 24, 16, 20, 0, 0, 0, 17, 16, 16,
-            16, 16, 20, 17, 16, 20, 0, 17, 16, 18, 18, 18, 16, 16, 16, 16, 16, 20, 17, 24, 28, 0,
-            25, 24, 16, 16, 16, 24, 24, 24, 24, 24, 20, 21, 0, 0, 0, 0, 0, 17, 16, 20, 0, 0, 0, 0,
-            0, 21, 17, 18, 22, 0, 19, 18, 16, 16, 16, 18, 18, 18, 18, 18, 20, 17, 16, 20, 0, 17, 16,
-            16, 16, 16, 16, 16, 16, 16, 16, 20, 25, 24, 24, 26, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-            24, 28};
+    private final short levelData[] = {
+        19, 26, 26, 26, 26, 26, 18, 18, 18, 26, 26, 26, 26, 26, 22,
+        21,  0,  0,  0,  0,  0, 17, 16, 20,  0,  0,  0,  0,  0, 21,
+        21,  0, 19, 18, 18, 18, 16, 16, 16, 26, 26, 26, 26, 26, 20,
+        21,  0, 17, 16, 16, 16, 16, 16, 20,  0,  0,  0,  0,  0, 21,
+        21,  0, 17, 16, 16, 16, 16, 16, 16, 18, 18, 18, 18, 18, 20,
+        21,  0, 17, 16, 16, 16, 24, 24, 24, 16, 16, 16, 16, 16, 20,
+        17, 18, 16, 16, 16, 20,  0,  0,  0, 17, 16, 16, 16, 16, 20,
+        17, 16, 16, 16, 16, 20,  0,  0,  0, 17, 16, 16, 16, 16, 20,
+        17, 16, 16, 24, 16, 20,  0,  0,  0, 17, 16, 16, 16, 16, 20,
+        17, 16, 20,  0, 17, 16, 18, 18, 18, 16, 16, 16, 16, 16, 20,
+        17, 24, 28,  0, 25, 24, 16, 16, 16, 24, 24, 24, 24, 24, 20,
+        21,  0,  0,  0,  0,  0, 17, 32, 20,  0,  0,  0,  0,  0, 21,
+        17, 18, 22,  0, 19, 18, 16, 64, 16, 18, 18, 18, 18, 18, 20,
+        17, 16, 20,  0, 17, 16, 16, 16, 16, 16, 16, 16, 16, 16, 20,
+        25, 24, 24, 26, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 28};
 
     private final int validSpeeds[] = {1, 2, 3, 4, 6, 8};
     private final int maxSpeed = 6;
@@ -65,12 +71,12 @@ public class Board extends JPanel implements ActionListener {
 
 
     private void loadImages() {
-        down = new ImageIcon("src/main/resources/images/down.gif").getImage();
-        up = new ImageIcon("src/main/resources/images/up.gif").getImage();
-        left = new ImageIcon("src/main/resources/images/left.gif").getImage();
-        right = new ImageIcon("src/main/resources/images/right.gif").getImage();
-        ghost = new ImageIcon("src/main/resources/images/ghost.gif").getImage();
-        heart = new ImageIcon("src/main/resources/images/heart.png").getImage();
+        down = new ImageIcon("client/src/main/resources/images/down.gif").getImage();
+        up = new ImageIcon("client/src/main/resources/images/up.gif").getImage();
+        left = new ImageIcon("client/src/main/resources/images/left.gif").getImage();
+        right = new ImageIcon("client/src/main/resources/images/right.gif").getImage();
+        ghost = new ImageIcon("client/src/main/resources/images/ghost.gif").getImage();
+        apple = new ImageIcon("client/src/main/resources/images/apple.png").getImage();
 
     }
 
@@ -119,23 +125,16 @@ public class Board extends JPanel implements ActionListener {
         g2d.setFont(small);
         g2d.drawString(start, (SCREEN_SIZE - metr.stringWidth(start)) / 2, SCREEN_SIZE / 2);
 
-        // g2d.setColor(Color.white);
-        // g2d.setFont(small);
-        // g2d.drawString(start, (SCREEN_SIZE - metr.stringWidth(start)) / 2, SCREEN_SIZE / 2);
-
-        // String start = "Press SPACE to start";
-        // g2d.setColor(new Color (0,32,48));
-        // g2d.drawString(start, (SCREEN_SIZE)/4, 150);
     }
 
     private void drawScore(Graphics2D g) {
         g.setFont(smallFont);
-        g.setColor(new Color(255, 255, 0));
+        g.setColor(dotColor);
         String s = "Score: " + score;
         g.drawString(s, SCREEN_SIZE / 2 + 96, SCREEN_SIZE + 16);
 
         for (int i = 0; i < lives; i++) {
-            g.drawImage(heart, i * 28 + 8, SCREEN_SIZE + 1, this);
+            g.drawImage(left, i * 28 + 8, SCREEN_SIZE + 1, this);
         }
     }
 
@@ -155,7 +154,9 @@ public class Board extends JPanel implements ActionListener {
 
         if (finished) {
 
-            score += 50;
+            score += 10000;
+            lives++;
+
 
             if (N_GHOSTS < MAX_GHOSTS) {
                 N_GHOSTS++;
@@ -264,9 +265,22 @@ public class Board extends JPanel implements ActionListener {
             pos = pacman_x / BLOCK_SIZE + N_BLOCKS * (int) (pacman_y / BLOCK_SIZE);
             ch = screenData[pos];
 
+            // pacman come un punto
             if ((ch & 16) != 0) {
                 screenData[pos] = (short) (ch & 15);
-                score++;
+                score += 10;
+            }
+
+            //pacman come una fruta
+            if ((ch & 32) != 0) {
+                screenData[pos] = (short) (ch & 15);
+                score += 100;
+            }
+
+            //pacman come una pastilla
+            if ((ch & 64) != 0) {
+                screenData[pos] = (short) (ch & 15);
+                lives++;
             }
 
             if (req_dx != 0 || req_dy != 0) {
@@ -316,25 +330,41 @@ public class Board extends JPanel implements ActionListener {
                 g2d.setColor(mazeColor);
                 g2d.setStroke(new BasicStroke(2));
 
+                //borde izquierdo
                 if ((screenData[i] & 1) != 0) {
                     g2d.drawLine(x, y, x, y + BLOCK_SIZE - 1);
                 }
 
+                //borde superior
                 if ((screenData[i] & 2) != 0) {
                     g2d.drawLine(x, y, x + BLOCK_SIZE - 1, y);
                 }
 
+                //borde derecho
                 if ((screenData[i] & 4) != 0) {
                     g2d.drawLine(x + BLOCK_SIZE - 1, y, x + BLOCK_SIZE - 1, y + BLOCK_SIZE - 1);
                 }
 
+                //borde inferior
                 if ((screenData[i] & 8) != 0) {
                     g2d.drawLine(x, y + BLOCK_SIZE - 1, x + BLOCK_SIZE - 1, y + BLOCK_SIZE - 1);
                 }
 
+                //Puntos
                 if ((screenData[i] & 16) != 0) {
                     g2d.setColor(dotColor);
                     g2d.fillRect(x + 11, y + 11, 2, 2);
+                }
+
+                //Frutas
+                if ((screenData[i] & 32) != 0) {
+                    g2d.drawImage(apple, x, y, this);
+                    g2d.fillRect(x + 11, y + 11, 2, 2);
+                }
+
+                if ((screenData[i] & 64) != 0) {
+                    g2d.setColor(dotColor);
+                    g2d.fillOval(x + 10, y + 10, 10, 10);
                 }
 
                 i++;
@@ -347,7 +377,7 @@ public class Board extends JPanel implements ActionListener {
         lives = 3;
         score = 0;
         initLevel();
-        N_GHOSTS = 6;
+        N_GHOSTS = 4;
         currentSpeed = 3;
     }
 
@@ -452,5 +482,7 @@ public class Board extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         repaint();
     }
+
+
 
 }

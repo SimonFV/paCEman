@@ -1,15 +1,16 @@
 package src.main.java;
 
-// import javax.swing.JButton;
+import java.awt.Color;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.border.LineBorder;
 
 public class GUI {
     private Client client;
     private JFrame mainFrame;
-    private JPanel boardPanel;
-    // private JButton player;
-    // private JButton observer;
+    private JPanel boardPanel, menuPanel;
+    private JButton playerButton, observerButton;
     private String messageReceived;
 
     public GUI(Client client) {
@@ -17,14 +18,52 @@ public class GUI {
 
         mainFrame = new JFrame();
 
-        boardPanel = new Board();
+        menuPanel = new JPanel();
+        menuPanel.setBackground(Color.BLACK);
+        menuPanel.setLayout(null);
 
-        mainFrame.add(boardPanel);
+        playerButton = new JButton("PLAY");
+        playerButton.addActionListener(e -> startAsPlayer());
+        playerButton.setBounds(140, 100, 100, 40);
+        playerButton.setBackground(new Color(0, 0, 40));
+        playerButton.setForeground(Color.YELLOW);
+        playerButton.setBorder(new LineBorder(Color.BLUE));
+        playerButton.setFocusable(false);
+        menuPanel.add(playerButton);
+
+        observerButton = new JButton("OBSERVE");
+        observerButton.addActionListener(e -> startAsObserver());
+        observerButton.setBounds(140, 200, 100, 40);
+        observerButton.setBackground(new Color(0, 0, 40));
+        observerButton.setForeground(Color.YELLOW);
+        observerButton.setBorder(new LineBorder(Color.BLUE));
+        observerButton.setFocusable(false);
+        menuPanel.add(observerButton);
+
+        mainFrame.add(menuPanel);
         mainFrame.setVisible(true);
         mainFrame.setTitle("PaCEman");
         mainFrame.setSize(380, 420);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setLocationRelativeTo(null);
+    }
+
+    public void startAsPlayer() {
+        mainFrame.getContentPane().removeAll();
+        boardPanel = new Board();
+        mainFrame.getContentPane().add(boardPanel);
+        mainFrame.revalidate();
+        mainFrame.repaint();
+        boardPanel.grabFocus();
+        boardPanel.requestFocusInWindow();
+    }
+
+    public void startAsObserver() {
+        mainFrame.getContentPane().removeAll();
+        boardPanel = new Board();
+        mainFrame.getContentPane().add(boardPanel);
+        mainFrame.revalidate();
+        mainFrame.repaint();
     }
 
     // Inicia la conexion con el servidor

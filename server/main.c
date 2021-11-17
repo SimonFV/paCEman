@@ -24,7 +24,7 @@ int main()
         }
         else
         {
-            update_msg_out(key_input, -1);
+            update_msg_out(key_input);
         }
         fflush(stdout);
     }

@@ -1,52 +1,30 @@
 package src.main.java;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
+// import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-import java.awt.BorderLayout;
 
 public class GUI {
     private Client client;
-    private JFrame frame;
-    private JPanel panel;
-    private JButton send_button;
-    private JButton connect_button;
-    private String message_received;
-    private JTextField send_text;
+    private JFrame mainFrame;
+    private JPanel boardPanel;
+    // private JButton player;
+    // private JButton observer;
+    private String messageReceived;
 
     public GUI(Client client) {
         this.client = client;
 
-        frame = new JFrame();
-        panel = new JPanel();
+        mainFrame = new JFrame();
 
-        connect_button = new JButton("Connect");
-        connect_button.addActionListener(e -> connect());
-        connect_button.setBounds(100, 100, 100, 40);
-        connect_button.setFocusable(false);
+        boardPanel = new Board();
 
-        send_button = new JButton("Send");
-        send_button.addActionListener(e -> send(send_text.getText()));
-        send_button.setBounds(100, 200, 100, 40);
-        send_button.setFocusable(false);
-
-        send_text = new JTextField(30);
-        send_text.setBounds(210, 200, 200, 30);
-
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
-        panel.setLayout(null);
-        panel.add(send_button);
-        panel.add(connect_button);
-        panel.add(send_text);
-
-        frame.add(panel, BorderLayout.CENTER);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setTitle("PaCEman");
-        frame.setSize(800, 600);
-
-        frame.setVisible(true);
+        mainFrame.add(boardPanel);
+        mainFrame.setVisible(true);
+        mainFrame.setTitle("PaCEman");
+        mainFrame.setSize(380, 420);
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainFrame.setLocationRelativeTo(null);
     }
 
     // Inicia la conexion con el servidor
@@ -65,9 +43,9 @@ public class GUI {
             @Override
             public void run() {
                 while (true) {
-                    message_received = client.read();
-                    if (message_received != "-1") {
-                        System.out.println("Recibido: " + message_received);
+                    messageReceived = client.read();
+                    if (messageReceived != "-1") {
+                        System.out.println("Recibido: " + messageReceived);
                     } else {
                         break;
                     }

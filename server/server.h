@@ -1,4 +1,4 @@
-#include "constants.h"
+#include "game.h"
 
 char running = !0; // estado del servidir, mantiene vivo el loop principal
 char message[BUFLEN];
@@ -6,28 +6,20 @@ char message[BUFLEN];
 HANDLE msg_in_mutex, msg_out_mutex; // Mutex par accesar a los mensajes desde diferentes hilos
 
 // Estructura que almacena los mensajes y quien los envia o recibe
-typedef struct message
-{
-    char text[BUFLEN];
-    int current_client;
-} message_t;
-
-message_t msg_in, msg_out; // Mensajes de entrada y salida, respectivamente
+char msg_out[BUFLEN], msg_in[BUFLEN]; // Mensajes de entrada y salida, respectivamente
 
 // Funciones que actualizan los mensajes enviados y recibidos utilizando mutex
 // Parametros: Mensaje, Index del cliente (-1 para enviar a todos)
-void update_msg_in(char *new_msg, int client)
+void update_msg_in(char *new_msg)
 {
     WaitForSingleObject(msg_in_mutex, INFINITE);
-    strcpy_s(msg_in.text, BUFLEN, new_msg);
-    msg_in.current_client = client;
+    strcpy_s(msg_in, BUFLEN, new_msg);
     ReleaseMutex(msg_in_mutex);
 }
-void update_msg_out(char *new_msg, int client)
+void update_msg_out(char *new_msg)
 {
     WaitForSingleObject(msg_out_mutex, INFINITE);
-    strcpy_s(msg_out.text, BUFLEN, new_msg);
-    msg_out.current_client = client;
+    strcpy_s(msg_out, BUFLEN, new_msg);
     ReleaseMutex(msg_out_mutex);
 }
 
@@ -150,58 +142,40 @@ int start_server()
             }
         }
 
+        // ENVIO DE MENSAJES A TODOS LOS CLIENTES
+        WaitForSingleObject(msg_out_mutex, INFINITE); //Bloquea el mensaje mientras es enviado
+        for (int i = 0; i < MAX_CLIENTS; i++)
+        {
+            if (!clients[i])
+            {
+                continue;
+            }
+            sd = clients[i];
+
+            // Envia el mensaje que esta en cola
+            if (msg_out[0] != '\0')
+            {
+                sendRes = send(sd, msg_out, strlen(msg_out), 0);
+                if (sendRes == SOCKET_ERROR)
+                {
+                    printf("Error al enviar mensaje devuelta: %d\n", WSAGetLastError());
+                    shutdown(sd, SD_BOTH);
+                    closesocket(sd);
+                    clients[i] = 0;
+                    curNoClients--;
+                }
+            }
+        }
+        msg_out[0] = '\0';
+        ReleaseMutex(msg_out_mutex);
+
         // Espera por actividad en alguno de los sockets
-        struct timeval tv = {0, 200000}; // Tiempo maximo que espera por actividad en segundos
+        struct timeval tv = {0, 200000}; // Tiempo maximo que espera por actividad en microsegundos
         int activity = select(max_sd + 1, &socketSet, NULL, NULL, &tv);
         if (activity < 0)
         {
             continue;
         }
-
-        // Envia el mensaje a los clientes
-        WaitForSingleObject(msg_out_mutex, INFINITE);
-        if (strlen(msg_out.text) > 0)
-        {
-            if (msg_out.current_client == -1) // Envia el mensaje a todos
-            {
-                for (int i = 0; i < MAX_CLIENTS; i++)
-                {
-                    if (!clients[i])
-                    {
-                        continue;
-                    }
-
-                    sd = clients[i];
-                    sendRes = send(sd, msg_out.text, strlen(msg_out.text), 0);
-                    if (sendRes == SOCKET_ERROR)
-                    {
-                        printf("Error al enviar mensaje devuelta: %d\n", WSAGetLastError());
-                        shutdown(sd, SD_BOTH);
-                        closesocket(sd);
-                        clients[i] = 0;
-                        curNoClients--;
-                    }
-                }
-            }
-            else //Envia el mensaje a un cliente especifico
-            {
-                if (clients[msg_out.current_client])
-                {
-                    sd = clients[msg_out.current_client];
-                    sendRes = send(sd, msg_out.text, strlen(msg_out.text), 0);
-                    if (sendRes == SOCKET_ERROR)
-                    {
-                        printf("Error al enviar mensaje devuelta: %d\n", WSAGetLastError());
-                        shutdown(sd, SD_BOTH);
-                        closesocket(sd);
-                        clients[msg_out.current_client] = 0;
-                        curNoClients--;
-                    }
-                }
-            }
-            msg_out.text[0] = '\0';
-        }
-        ReleaseMutex(msg_out_mutex);
 
         // Determina si el listener presenta actividad
         if (FD_ISSET(listener, &socketSet))
@@ -277,20 +251,13 @@ int start_server()
                 res = recv(sd, recvbuf, BUFLEN, 0);
                 if (res > 0)
                 {
-                    // Imprime el mensaje recibido
-                    recvbuf[res] = '\0';
+                    recvbuf[res] = '\0'; // Agrega un limite al mensaje
                     printf("Recibido (%d): %s\n", res, recvbuf);
 
-                    // Revisa si el mensaje es para cerrar el servidor
-                    if (!memcmp(recvbuf, "/quit", 5 * sizeof(char)))
-                    {
-                        running = 0; // false
-                        break;
-                    }
-
-                    // Reenvia el mismo mensaje devuelta al cliente
-                    /*
-                    sendRes = send(sd, recvbuf, res, 0);
+                    // PROCESA EL MENSAJE RECIBIDO POR EL CLIENTE
+                    // ENVIA LA POSICION DE LOS OBJETOS A TODOS LOS OBSERVERS CONECTADOS
+                    char msg_position[] = "pos X Y";
+                    sendRes = send(sd, msg_position, strlen(msg_position), 0);
                     if (sendRes == SOCKET_ERROR)
                     {
                         printf("Error al enviar mensaje devuelta: %d\n", WSAGetLastError());
@@ -298,7 +265,8 @@ int start_server()
                         closesocket(sd);
                         clients[i] = 0;
                         curNoClients--;
-                    } */
+                        continue;
+                    }
                 }
                 else
                 {
@@ -306,7 +274,6 @@ int start_server()
                     getpeername(sd, (struct sockaddr *)&clientAddr, &clientAddrlen);
                     printf("Cliente desconectado: %s:%d\n",
                            inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
-
                     shutdown(sd, SD_BOTH);
                     closesocket(sd);
                     clients[i] = 0;
